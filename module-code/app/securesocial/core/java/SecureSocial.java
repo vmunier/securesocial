@@ -16,13 +16,17 @@
  */
 package securesocial.core.java;
 
-import org.codehaus.jackson.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import play.Logger;
 import play.api.libs.oauth.ServiceInfo;
+import static play.libs.Akka.future;
+import play.libs.F.*;
+import java.util.concurrent.Callable;
 import play.libs.Json;
 import play.libs.Scala;
 import play.mvc.Action;
 import play.mvc.Http;
+import play.mvc.SimpleResult;
 import play.mvc.Result;
 import play.mvc.With;
 import scala.Option;
@@ -46,7 +50,7 @@ import java.lang.annotation.Target;
  * Sample usage:
  *
  *  @SecureSocial.Secured
- *  public static Result index() {
+ *  public static SimpleResult index() {
  *      Identity user = (Identity) ctx().args.get(SecureSocial.USER_KEY);
  *      return ok("Hello " + user.displayName);
  *  }
@@ -112,11 +116,11 @@ public class SecureSocial {
                 if ( result != null && !result.isValid()) {
                     Authenticator.delete(result.id());
                     ctx.response().discardCookie(
-                            Authenticator.cookieName(),
-                            Authenticator.cookiePath(),
-                            Scala.orNull(Authenticator.cookieDomain()),
-                            Authenticator.cookieSecure()
-                            );
+                                                 Authenticator.cookieName(),
+                                                 Authenticator.cookiePath(),
+                                                 Scala.orNull(Authenticator.cookieDomain()),
+                                                 Authenticator.cookieSecure()
+                                                 );
                     result = null;
                 }
             }
@@ -129,20 +133,20 @@ public class SecureSocial {
      *
      * @return a SocialUser or null if there is no current user
      */
-     public static Identity currentUser() {
+    public static Identity currentUser() {
         Authenticator authenticator = getAuthenticatorFromRequest(Http.Context.current());
         return currentUser(authenticator);
-     }
+    }
 
     private static Identity currentUser(Authenticator authenticator) {
         Identity result = null;
 
-         if ( authenticator != null ) {
-             Option<Identity> optionalIdentity = UserService$.MODULE$.find(authenticator.identityId());
-             result = Scala.orNull(optionalIdentity);
+        if ( authenticator != null ) {
+            Option<Identity> optionalIdentity = UserService$.MODULE$.find(authenticator.identityId());
+            result = Scala.orNull(optionalIdentity);
 
-         }
-         return result;
+        }
+        return result;
     }
 
     /**
@@ -194,7 +198,7 @@ public class SecureSocial {
     public static class Secured extends Action<SecuredAction> {
 
         @Override
-        public Result call(Http.Context ctx) throws Throwable {
+            public Promise<SimpleResult> call(final Http.Context ctx) throws Throwable {
             try {
                 fixHttpContext(ctx);
                 final Authenticator authenticator = getAuthenticatorFromRequest(ctx);
@@ -204,11 +208,16 @@ public class SecureSocial {
                         Logger.debug("[securesocial] anonymous user trying to access : " + ctx.request().uri());
                     }
                     if ( configuration.ajaxCall() ) {
-                        return unauthorized(ajaxCallNotAuthenticated());
+                        return Promise.promise(new Function0<SimpleResult>() { public SimpleResult apply() {
+                                    return unauthorized(ajaxCallNotAuthenticated());
+                                }});
                     } else {
                         ctx.flash().put("error", play.i18n.Messages.get("securesocial.loginRequired"));
                         ctx.session().put(ORIGINAL_URL, ctx.request().uri());
-                        return redirect(RoutesHelper.login().absoluteURL(ctx.request(), IdentityProvider.sslEnabled()));
+                        return Promise.promise(new Function0<SimpleResult>() { public SimpleResult apply() {
+                                    return redirect(RoutesHelper.login().absoluteURL(ctx.request(), IdentityProvider.sslEnabled()));
+                                }});
+
                     }
                 } else {
                     Authorization authorization = configuration.authorization().newInstance();
@@ -219,9 +228,13 @@ public class SecureSocial {
                         return delegate.call(ctx);
                     } else {
                         if ( configuration.ajaxCall() ) {
-                            return forbidden(ajaxCallNotAuthorized());
+                            return Promise.promise(new Function0<SimpleResult>() { public SimpleResult apply() {
+                                        return forbidden(ajaxCallNotAuthorized());
+                                    }});
                         } else {
-                            return redirect(RoutesHelper.notAuthorized());
+                            return Promise.promise(new Function0<SimpleResult>() { public SimpleResult apply() {
+                                        return redirect(RoutesHelper.notAuthorized());
+                                    }});
                         }
                     }
                 }
@@ -252,7 +265,7 @@ public class SecureSocial {
      */
     public static class UserAware extends Action<UserAwareAction> {
         @Override
-        public Result call(Http.Context ctx) throws Throwable {
+            public Promise<SimpleResult> call(Http.Context ctx) throws Throwable {
             SecureSocial.fixHttpContext(ctx);
             try {
                 Authenticator authenticator = getAuthenticatorFromRequest(ctx);
