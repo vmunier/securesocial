@@ -21,7 +21,6 @@ import securesocial.core._
 import play.api.Play
 import Play.current
 import providers.UsernamePasswordProvider
-import providers.utils.RoutesHelper
 import play.Logger
 
 
@@ -37,9 +36,13 @@ object LoginPage extends Controller
 
   /**
    * Renders the login page
+   *
+   * @param refererParam specifies the referer page the user comes from. The param can be set, e.g.,
+   * as URL parameter /login?referer=https://www.example.com/somePage. If not set, SecureSocial
+   * will try to use the HTTP header "referer".
    * @return
    */
-  def login = Action { implicit request =>
+  def login(refererParam: Option[String]) = Action { implicit request =>
     val to = ProviderController.landingUrl
     if ( SecureSocial.currentUser.isDefined ) {
       // if the user is already logged in just redirect to the app
@@ -50,7 +53,7 @@ object LoginPage extends Controller
     } else {
       import com.typesafe.plugin._
       if ( SecureSocial.enableRefererAsOriginalUrl ) {
-        SecureSocial.withRefererAsOriginalUrl(Ok(use[TemplatesPlugin].getLoginPage(request, UsernamePasswordProvider.loginForm)))
+        SecureSocial.withRefererAsOriginalUrl(Ok(use[TemplatesPlugin].getLoginPage(request, UsernamePasswordProvider.loginForm)), refererParam)
       } else {
         import Play.current
         Ok(use[TemplatesPlugin].getLoginPage(request, UsernamePasswordProvider.loginForm))
@@ -66,7 +69,7 @@ object LoginPage extends Controller
    * @return
    */
   def logout = Action { implicit request =>
-    val to = Play.configuration.getString(onLogoutGoTo).getOrElse(RoutesHelper.login().absoluteURL(IdentityProvider.sslEnabled))
+    val to = Play.configuration.getString(onLogoutGoTo).getOrElse("/")
     val user = for (
       authenticator <- SecureSocial.authenticatorFromRequest ;
       user <- UserService.find(authenticator.identityId)

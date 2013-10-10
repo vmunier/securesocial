@@ -34,7 +34,7 @@ Choose either depending on whether you'd like to use a stable release or test th
 
 If you'd like to use the master snapshot change it to:
 
-	:::scala	
+	:::scala
     val appDependencies = Seq(
         "securesocial" %% "securesocial" % "master-SNAPSHOT"
     )
@@ -47,7 +47,7 @@ If you'd like to use the master snapshot change it to:
 
 Versions prior 2.0.11 are available at:
 
-- **Releases**: http://securesocial.ws/repository/releases.  
+- **Releases**: http://securesocial.ws/repository/releases.
 - **Snapshots**: http://securesocial.ws/repository/snapshots.
 
 ### Adding routes
@@ -56,11 +56,11 @@ Add the routes for SecureSocial into your app's `routes` file:
 
 	:::bash
 	# Login page
-	GET     /login                      securesocial.controllers.LoginPage.login
+        GET     /login                      securesocial.controllers.LoginPage.login(referer:Option[String])
 	GET     /logout                     securesocial.controllers.LoginPage.logout
 
-	# User Registration and password handling 
-	GET     /signup                     securesocial.controllers.Registration.startSignUp
+	# User Registration and password handling
+        GET     /signup                     securesocial.controllers.Registration.startSignUp(referer:Option[String])
 	POST    /signup                     securesocial.controllers.Registration.handleStartSignUp
 	GET     /signup/:token              securesocial.controllers.Registration.signUp(token)
 	POST    /signup/:token              securesocial.controllers.Registration.handleSignUp(token)
@@ -76,14 +76,14 @@ Add the routes for SecureSocial into your app's `routes` file:
 	POST    /authenticate/:provider     securesocial.controllers.ProviderController.authenticateByPost(provider)
 	GET     /not-authorized             securesocial.controllers.ProviderController.notAuthorized
 
-
+ In Java, replace `referer:Option[String]` with `referer ?= null`. `referer` can then be passed via URL parameter, e.g., `/login?referer=https://www.example.com/redirect-me-here`.
 
 ### SecureSocial Plugins
 
-SecureSocial is designed in a modular architecture using plugins. This means you can easily enable/disable them to include only what you need and also that you can change the built-in plugins for your own implementation if there is a need to customize how things work. 
+SecureSocial is designed in a modular architecture using plugins. This means you can easily enable/disable them to include only what you need and also that you can change the built-in plugins for your own implementation if there is a need to customize how things work.
 
 Plugins are defined in the `play.plugins` file under the `conf` directory. If you don't have that file yet create one and add:
-	
+
 	:::bash
 	1500:com.typesafe.plugin.CommonsMailerPlugin
 	9994:securesocial.core.DefaultAuthenticatorStore
@@ -103,7 +103,7 @@ Plugins are defined in the `play.plugins` file under the `conf` directory. If yo
 	10008:securesocial.core.providers.VkProvider
 	10009:securesocial.core.providers.InstagramProvider
 
-Only the authentication providers you include in the `play.plugins` file will appear on the login page.  
+Only the authentication providers you include in the `play.plugins` file will appear on the login page.
 
 *If you don't plan to have a username and password login you can remove `UsernamePasswordProvider`, `CommonsMailerPlugin`, `BCryptPasswordHasher` and `DefaultPasswordValidator`.*
 

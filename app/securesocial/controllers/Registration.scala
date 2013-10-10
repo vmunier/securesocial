@@ -62,16 +62,16 @@ object Registration extends Controller {
   val TokenDurationKey = "securesocial.userpass.tokenDuration"
   val DefaultDuration = 60
   val TokenDuration = Play.current.configuration.getInt(TokenDurationKey).getOrElse(DefaultDuration)
-  
+
   /** The redirect target of the handleStartSignUp action. */
-  val onHandleStartSignUpGoTo = stringConfig("securesocial.onStartSignUpGoTo", RoutesHelper.login().url)
+  val onHandleStartSignUpGoTo = stringConfig("securesocial.onStartSignUpGoTo", "/")
   /** The redirect target of the handleSignUp action. */
-  val onHandleSignUpGoTo = stringConfig("securesocial.onSignUpGoTo", RoutesHelper.login().url)
+  val onHandleSignUpGoTo = stringConfig("securesocial.onSignUpGoTo", "/")
   /** The redirect target of the handleStartResetPassword action. */
-  val onHandleStartResetPasswordGoTo = stringConfig("securesocial.onStartResetPasswordGoTo", RoutesHelper.login().url)
+  val onHandleStartResetPasswordGoTo = stringConfig("securesocial.onStartResetPasswordGoTo", "/")
   /** The redirect target of the handleResetPassword action. */
-  val onHandleResetPasswordGoTo = stringConfig("securesocial.onResetPasswordGoTo", RoutesHelper.login().url)
-  
+  val onHandleResetPasswordGoTo = stringConfig("securesocial.onResetPasswordGoTo", "/")
+
   private def stringConfig(key: String, default: => String) = {
     Play.current.configuration.getString(key).getOrElse(default)
   }
@@ -137,8 +137,12 @@ object Registration extends Controller {
 
   /**
    * Starts the sign up process
+   *
+   * @param refererParam specifies the referer page the user comes from. The param can be set, e.g.,
+   * as URL parameter /signup?referer=https://www.example.com/somePage. If not set, SecureSocial
+   * will try to use the HTTP header "referer".
    */
-  def startSignUp = Action { implicit request =>
+  def startSignUp(refererParam: Option[String]) = Action { implicit request =>
     if ( SecureSocial.enableRefererAsOriginalUrl ) {
       SecureSocial.withRefererAsOriginalUrl(Ok(use[TemplatesPlugin].getStartSignUpPage(request, startForm)))
     } else {

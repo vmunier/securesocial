@@ -94,12 +94,12 @@ object ProviderController extends Controller
           })
         } catch {
           case ex: AccessDeniedException => {
-            Redirect(RoutesHelper.login()).flashing("error" -> Messages("securesocial.login.accessDenied"))
+            Redirect("/").flashing("error" -> Messages("securesocial.login.accessDenied"))
           }
 
           case other: Throwable => {
             Logger.error("Unable to log user in. An exception was thrown", other)
-            Redirect(RoutesHelper.login()).flashing("error" -> Messages("securesocial.login.errorLoggingIn"))
+            Redirect("/").flashing("error" -> Messages("securesocial.login.errorLoggingIn"))
           }
         }
       }

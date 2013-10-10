@@ -215,7 +215,7 @@ public class SecureSocial {
                         ctx.flash().put("error", play.i18n.Messages.get("securesocial.loginRequired"));
                         ctx.session().put(ORIGINAL_URL, ctx.request().uri());
                         return Promise.promise(new Function0<SimpleResult>() { public SimpleResult apply() {
-                                    return redirect(RoutesHelper.login().absoluteURL(ctx.request(), IdentityProvider.sslEnabled()));
+                                    return redirect("/");
                                 }});
 
                     }
